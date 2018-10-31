@@ -13,20 +13,29 @@ public class ConcurrentQueueTest {
     public static void main(String args[]) {
         boolean is_debug = Boolean.parseBoolean(System.getProperty("is_debug", "false"));
         int threads = Integer.parseInt(System.getProperty("threads", "20"));
-        int max_count = Integer.parseInt(System.getProperty("max_count", "50000"));
+        int max_count = Integer.parseInt(System.getProperty("max_count", "600000"));
+
+        ArrayList<ThreadTest> threadTests = new ArrayList<ThreadTest>();
 
         System.out.println("Queue<HashMap<String, String>> TEST : ");
 
         // データの欠損確認
         for (int i = 0; i < threads; i++) {
-            new QueueThreadTest(max_count).start();
+            ThreadTest threadTest = new QueueThreadTest(max_count);
+            threadTest.start();
+            threadTests.add(threadTest);
+        }
+        try {
+            Thread.sleep(1000L);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         long previous_queue_size = -1L;
         long queue_value_total = 0L;
         while (queue_value_total != previous_queue_size) {
             previous_queue_size = queue_value_total;
             if(is_debug) {
-                System.out.println("queue_value_total : " + queue_value_total);
+                System.out.println(" queue_value_total : " + queue_value_total);
             }
             for(HashMap<String, String> data = queue.poll(); data != null; data = queue.poll()) {
                 queue_value_total += Long.parseLong(data.get("v"));
@@ -37,16 +46,28 @@ public class ConcurrentQueueTest {
                 e.printStackTrace();
             }
         }
-        System.out.println("DATA_TOTAL : " + queue_value_total);
-        System.out.println("RECORD_TIME(ns) : " + (QueueThreadTest.total_time.get())/queue_value_total);
-        System.out.println("RECORD_TIME_FACT(ns)("+QueueThreadTest.total_time.get()+"/"+(threads * max_count)+") : " + (QueueThreadTest.total_time.get())/(threads * max_count));
+        System.out.println(" DATA_TOTAL : " + queue_value_total);
+        System.out.println(" RECORD_TIME(ns) : " + (QueueThreadTest.total_time.get())/queue_value_total);
+        System.out.println("  RECORD_TIME_FACT(ns)("+QueueThreadTest.total_time.get()+"/"+(threads * max_count)+") : " + (QueueThreadTest.total_time.get())/(threads * max_count));
         QueueThreadTest.resetTotalTime();
+
+        // スレッドを終了
+        for (ThreadTest threadTest : threadTests) {
+            threadTest.stop();
+        }
+        threadTests = new ArrayList<ThreadTest>();
 
         System.out.println("BlockingQueue<HashMap<String, String>> TEST : ");
         for (int i = 0; i < threads; i++) {
-            new BlockingQueueThreadTest(max_count).start();
+            ThreadTest threadTest = new BlockingQueueThreadTest(max_count);
+            threadTest.start();
+            threadTests.add(threadTest);
         }
-        long queue_size = 0;
+        try {
+            Thread.sleep(1000L);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         previous_queue_size = -1L;
         queue_value_total = 0L;
         while (queue_value_total != previous_queue_size) {
@@ -63,25 +84,35 @@ public class ConcurrentQueueTest {
                 e.printStackTrace();
             }
         }
-        System.out.println("DATA_TOTAL : " + queue_value_total);
-        System.out.println("RECORD_TIME(ns) : " + (BlockingQueueThreadTest.total_time.get())/queue_value_total);
-        System.out.println("RECORD_TIME_FACT(ns)("+BlockingQueueThreadTest.total_time.get()+"/"+(threads * max_count)
+        System.out.println(" DATA_TOTAL : " + queue_value_total);
+        System.out.println(" RECORD_TIME(ns) : " + (BlockingQueueThreadTest.total_time.get())/queue_value_total);
+        System.out.println("  RECORD_TIME_FACT(ns)("+BlockingQueueThreadTest.total_time.get()+"/"+(threads * max_count)
                 + ") : " + (BlockingQueueThreadTest.total_time.get())/(threads * max_count));
         BlockingQueueThreadTest.resetTotalTime();
 
+        // スレッドを終了
+        for (ThreadTest threadTest : threadTests) {
+            threadTest.stop();
+        }
+        threadTests = new ArrayList<ThreadTest>();
+
         System.out.println("HashMap<String, BlockingQueue<HashMap<String, String>>> TEST : ");
         for (int i = 0; i < threads; i++) {
-            new BlockingQueueHashMapThreadTest(max_count).start();
+            ThreadTest threadTest = new BlockingQueueHashMapThreadTest(max_count);
+            threadTest.start();
+            threadTests.add(threadTest);
         }
-        queue_size = -1;
+        try {
+            Thread.sleep(1000L);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         previous_queue_size = -1L;
         queue_value_total = 0L;
         while (queue_value_total != previous_queue_size) {
             previous_queue_size = queue_value_total;
-            queue_size = 0;
             for(String key : blocking_queue_hashmap.keySet()) {
                 if(blocking_queue_hashmap.get(key) != null) {
-                    queue_size += blocking_queue_hashmap.get(key).size();
                     for(HashMap<String, String> data = blocking_queue_hashmap.get(key).poll();
                         data != null;
                         data = blocking_queue_hashmap.get(key).poll()) {
@@ -98,15 +129,21 @@ public class ConcurrentQueueTest {
                 e.printStackTrace();
             }
         }
-        System.out.println("DATA_TOTAL : " + queue_value_total);
-        System.out.println("RECORD_TIME(ns) : " + (BlockingQueueHashMapThreadTest.total_time.get())/queue_value_total);
-        System.out.println("RECORD_TIME_FACT(ns)("+BlockingQueueHashMapThreadTest.total_time.get()+"/"+(threads * max_count)
-                + ") : " + (BlockingQueueThreadTest.total_time.get())/(threads * max_count));
+        System.out.println(" DATA_TOTAL : " + queue_value_total);
+        System.out.println(" RECORD_TIME(ns) : " + (BlockingQueueHashMapThreadTest.total_time.get())/queue_value_total);
+        System.out.println("  RECORD_TIME_FACT(ns)("+BlockingQueueHashMapThreadTest.total_time.get()+"/"+(threads * max_count)
+                + ") : " + (BlockingQueueHashMapThreadTest.total_time.get())/(threads * max_count));
         BlockingQueueHashMapThreadTest.resetTotalTime();
+
+        // スレッドを終了
+        for (ThreadTest threadTest : threadTests) {
+            threadTest.stop();
+        }
+        threadTests = new ArrayList<ThreadTest>();
     }
 }
 
-class QueueThreadTest extends TreadTest {
+class QueueThreadTest extends ThreadTest {
     public QueueThreadTest(int max_count) {
         super(max_count);
     }
@@ -115,7 +152,7 @@ class QueueThreadTest extends TreadTest {
     }
 }
 
-class BlockingQueueThreadTest extends TreadTest {
+class BlockingQueueThreadTest extends ThreadTest {
     public BlockingQueueThreadTest(int max_count) {
         super(max_count);
     }
@@ -124,7 +161,7 @@ class BlockingQueueThreadTest extends TreadTest {
     }
 }
 
-class BlockingQueueHashMapThreadTest extends TreadTest {
+class BlockingQueueHashMapThreadTest extends ThreadTest {
     BlockingQueue<HashMap<String, String>> blocking_queue_entry = new LinkedBlockingQueue<HashMap<String, String>>();
     public BlockingQueueHashMapThreadTest(int max_count) {
         super(max_count);
@@ -135,16 +172,16 @@ class BlockingQueueHashMapThreadTest extends TreadTest {
     }
 }
 
-abstract class TreadTest extends Thread {
+abstract class ThreadTest extends Thread {
     int max_count = 0;
     static int current_thread_num = 0;
     String thread_num_string = "";
     static AtomicLong total_time = new AtomicLong();
-    public TreadTest() {
+    public ThreadTest() {
         current_thread_num++;
         thread_num_string = current_thread_num +"";
     }
-    public TreadTest(int max_count) {
+    public ThreadTest(int max_count) {
         this();
         this.max_count = max_count;
     }

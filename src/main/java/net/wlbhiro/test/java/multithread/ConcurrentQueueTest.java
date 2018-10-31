@@ -39,6 +39,7 @@ public class ConcurrentQueueTest {
         }
         System.out.println("DATA_TOTAL : " + queue_value_total);
         System.out.println("RECORD_TIME(ns) : " + (QueueThreadTest.total_time.get())/queue_value_total);
+        System.out.println("RECORD_TIME_FACT(ns)("+QueueThreadTest.total_time.get()+"/"+(threads * max_count)+") : " + (QueueThreadTest.total_time.get())/(threads * max_count));
         QueueThreadTest.resetTotalTime();
 
         System.out.println("BlockingQueue<HashMap<String, String>> TEST : ");
@@ -64,6 +65,8 @@ public class ConcurrentQueueTest {
         }
         System.out.println("DATA_TOTAL : " + queue_value_total);
         System.out.println("RECORD_TIME(ns) : " + (BlockingQueueThreadTest.total_time.get())/queue_value_total);
+        System.out.println("RECORD_TIME_FACT(ns)("+BlockingQueueThreadTest.total_time.get()+"/"+(threads * max_count)
+                + ") : " + (BlockingQueueThreadTest.total_time.get())/(threads * max_count));
         BlockingQueueThreadTest.resetTotalTime();
 
         System.out.println("HashMap<String, BlockingQueue<HashMap<String, String>>> TEST : ");
@@ -79,7 +82,9 @@ public class ConcurrentQueueTest {
             for(String key : blocking_queue_hashmap.keySet()) {
                 if(blocking_queue_hashmap.get(key) != null) {
                     queue_size += blocking_queue_hashmap.get(key).size();
-                    for(HashMap<String, String> data = blocking_queue_hashmap.get(key).poll(); data != null; data = blocking_queue_hashmap.get(key).poll()) {
+                    for(HashMap<String, String> data = blocking_queue_hashmap.get(key).poll();
+                        data != null;
+                        data = blocking_queue_hashmap.get(key).poll()) {
                         queue_value_total += Long.parseLong(data.get("v"));
                     }
                 }
@@ -95,6 +100,8 @@ public class ConcurrentQueueTest {
         }
         System.out.println("DATA_TOTAL : " + queue_value_total);
         System.out.println("RECORD_TIME(ns) : " + (BlockingQueueHashMapThreadTest.total_time.get())/queue_value_total);
+        System.out.println("RECORD_TIME_FACT(ns)("+BlockingQueueHashMapThreadTest.total_time.get()+"/"+(threads * max_count)
+                + ") : " + (BlockingQueueThreadTest.total_time.get())/(threads * max_count));
         BlockingQueueHashMapThreadTest.resetTotalTime();
     }
 }

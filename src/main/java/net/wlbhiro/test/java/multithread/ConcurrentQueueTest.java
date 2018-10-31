@@ -11,67 +11,90 @@ public class ConcurrentQueueTest {
     public static HashMap<String, BlockingQueue<HashMap<String, String>>> blocking_queue_hashmap = new HashMap<String, BlockingQueue<HashMap<String, String>>>();
 
     public static void main(String args[]) {
+        boolean is_debug = Boolean.parseBoolean(System.getProperty("is_debug", "false"));
         int threads = Integer.parseInt(System.getProperty("threads", "20"));
         int max_count = Integer.parseInt(System.getProperty("max_count", "50000"));
 
-        System.out.println("QUEUE TEST : ");
+        System.out.println("Queue<HashMap<String, String>> TEST : ");
+
+        // データの欠損確認
         for (int i = 0; i < threads; i++) {
             new QueueThreadTest(max_count).start();
         }
         long previous_queue_size = -1L;
-        while (queue.size() != previous_queue_size) {
-            previous_queue_size = queue.size();
-            System.out.println("queue.size : "+queue.size());
+        long queue_value_total = 0L;
+        while (queue_value_total != previous_queue_size) {
+            previous_queue_size = queue_value_total;
+            if(is_debug) {
+                System.out.println("queue_value_total : " + queue_value_total);
+            }
+            for(HashMap<String, String> data = queue.poll(); data != null; data = queue.poll()) {
+                queue_value_total += Long.parseLong(data.get("v"));
+            }
             try {
                 Thread.sleep(1000L);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        System.out.println("RECORD_TIME(ns) : " + (QueueThreadTest.total_time.get())/previous_queue_size);
+        System.out.println("DATA_TOTAL : " + queue_value_total);
+        System.out.println("RECORD_TIME(ns) : " + (QueueThreadTest.total_time.get())/queue_value_total);
         QueueThreadTest.resetTotalTime();
 
-        System.out.println("BLOCKING QUEUE TEST : ");
-
+        System.out.println("BlockingQueue<HashMap<String, String>> TEST : ");
         for (int i = 0; i < threads; i++) {
             new BlockingQueueThreadTest(max_count).start();
         }
         long queue_size = 0;
         previous_queue_size = -1L;
-        while (blocking_queue.size() != previous_queue_size) {
-            previous_queue_size = blocking_queue.size();
-            System.out.println("blocking_queue.size : "+blocking_queue.size());
+        queue_value_total = 0L;
+        while (queue_value_total != previous_queue_size) {
+            previous_queue_size = queue_value_total;
+            for(HashMap<String, String> data = blocking_queue.poll(); data != null; data = blocking_queue.poll()) {
+                queue_value_total += Long.parseLong(data.get("v"));
+            }
+            if(is_debug) {
+                System.out.println("queue_value_total : " + queue_value_total);
+            }
             try {
                 Thread.sleep(1000L);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        System.out.println("RECORD_TIME(ns) : " + (BlockingQueueThreadTest.total_time.get())/previous_queue_size);
+        System.out.println("DATA_TOTAL : " + queue_value_total);
+        System.out.println("RECORD_TIME(ns) : " + (BlockingQueueThreadTest.total_time.get())/queue_value_total);
         BlockingQueueThreadTest.resetTotalTime();
 
-        System.out.println("BLOCKING QUEUE HASHMAP TEST : ");
+        System.out.println("HashMap<String, BlockingQueue<HashMap<String, String>>> TEST : ");
         for (int i = 0; i < threads; i++) {
             new BlockingQueueHashMapThreadTest(max_count).start();
         }
         queue_size = -1;
-        previous_queue_size = 0L;
-        while (queue_size != previous_queue_size) {
-            previous_queue_size = queue_size;
+        previous_queue_size = -1L;
+        queue_value_total = 0L;
+        while (queue_value_total != previous_queue_size) {
+            previous_queue_size = queue_value_total;
             queue_size = 0;
             for(String key : blocking_queue_hashmap.keySet()) {
                 if(blocking_queue_hashmap.get(key) != null) {
                     queue_size += blocking_queue_hashmap.get(key).size();
+                    for(HashMap<String, String> data = blocking_queue_hashmap.get(key).poll(); data != null; data = blocking_queue_hashmap.get(key).poll()) {
+                        queue_value_total += Long.parseLong(data.get("v"));
+                    }
                 }
             }
-            System.out.println("blocking_queue_hashmap.get.size : "+queue_size);
+            if(is_debug) {
+                System.out.println("queue_value_total : " + queue_value_total);
+            }
             try {
                 Thread.sleep(1000L);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        System.out.println("RECORD_TIME(ns) : " + (BlockingQueueHashMapThreadTest.total_time.get())/previous_queue_size);
+        System.out.println("DATA_TOTAL : " + queue_value_total);
+        System.out.println("RECORD_TIME(ns) : " + (BlockingQueueHashMapThreadTest.total_time.get())/queue_value_total);
         BlockingQueueHashMapThreadTest.resetTotalTime();
     }
 }
@@ -125,7 +148,7 @@ abstract class TreadTest extends Thread {
     public void run() {
         for(int i=0; i<max_count; i++) {
             HashMap<String, String> map = new HashMap<String, String>();
-            map.put("v", i+"");
+            map.put("v", 1L+"");
             long start_time = System.nanoTime();
             exec(map);
             long end_time = System.nanoTime();
